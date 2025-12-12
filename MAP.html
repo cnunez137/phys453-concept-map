@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>PHYS 453 – Concept Map</title>
+
+<!-- MathJax (single, correct load) -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['\\(','\\)'], ['$','$']],
+      displayMath: [['\\[','\\]'], ['$$','$$']]
+    }
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+  background: url("gargantua-black-5200x3250-9621.jpg") center/cover no-repeat;
+}
+
+/* ===== TITLE ===== */
+#title {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 26px;
+  font-weight: 800;
+  color: white;
+  text-shadow: 0 0 12px black;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* ===== CONTROLS ===== */
+#controls {
+  position: absolute;
+  top: 60px;
+  left: 20px;
+  z-index: 10;
+}
+#controls button {
+  padding: 10px 16px;
+  margin-right: 10px;
+  border-radius: 10px;
+  border: 1px solid #fff7;
+  background: #0d1b45;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+#controls button:hover {
+  background: #1f3d78;
+}
+
+/* ===== INFO PANEL ===== */
+#infoBox {
+  position: absolute;
+  right: 40px;
+  top: 120px;
+  width: 420px;
+  max-height: 70vh;
+  overflow: auto;
+  padding: 18px 20px;
+  background: rgba(0,0,0,0.88);
+  border-radius: 14px;
+  color: #eee;
+  display: none;
+  z-index: 20;
+  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+}
+#infoBox h3 {
+  margin: 6px 0 10px 0;
+  text-align: center;
+}
+#closeInfo {
+  float: right;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 22px;
+  margin-top: 2px;
+}
+
+/* ===== SVG ===== */
+svg { width: 100vw; height: 100vh; }
+
+/* ===== NODES ===== */
+.node { cursor: pointer; }
+.node rect {
+  stroke: #000;
+  stroke-width: 3px;
+  rx: 18;
+  ry: 18;
+  transition: stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+}
+.node rect.highlight {
+  stroke: #fff;
+  stroke-width: 4px;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.5));
+}
+.node:hover rect {
+  stroke: #fff;
+  stroke-width: 4px;
+  filter: drop-shadow(0 0 14px rgba(255,255,255,0.55));
+}
+.node text.title {
+  fill: #000;
+  font-size: 22px;
+  font-weight: 700;
+  pointer-events: none;
+  text-anchor: middle;
+}
+.node text.hint {
+  font-size: 13px;
+  font-weight: 600;
+  fill: rgba(0,0,0,0.7);
+  pointer-events: none;
+  text-anchor: middle;
+}
+
+/* ===== LINKS ===== */
+.link {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 7;           /* constant thickness */
+  opacity: 0.30;             /* default dim */
+}
+.link.active {
+  opacity: 0.95;             /* highlight */
+}
+.link.dim {
+  opacity: 0.08;             /* further dim */
+}
+
+/* ===== LINK LABELS ===== */
+.link-label {
+  fill: white;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: rgba(0,0,0,0.75);
+  stroke-width: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="title">PHYS 453 – Cesar Nunez</div>
+
+<div id="controls">
+  <button onclick="applyDifficulty()">Difficulty View</button>
+  <button onclick="applyChrono()">Chronological View</button>
+</div>
+
+<div id="infoBox">
+  <span id="closeInfo" onclick="hideInfo()">×</span>
+  <h3 id="infoTitle"></h3>
+  <div id="infoContent"></div>
+</div>
+
+<svg id="svg" viewBox="0 0 3600 2400">
+  <defs>
+    <marker id="arrow"
+      viewBox="0 0 10 10"
+      refX="9" refY="5"
+      markerWidth="8" markerHeight="8"
+      orient="auto">
+      <path d="M0 0 L10 5 L0 10Z" fill="white"/>
+    </marker>
+  </defs>
+</svg>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+/* ================= CONFIG ================= */
+const NODE_W = 310, NODE_H = 76;
+const HALF_W = NODE_W/2, HALF_H = NODE_H/2;
+
+const DY = 300;            // tighter vertical spacing
+const ROW_SPREAD = 1.15;   // tighter horizontal spacing
+
+const MIN_BEND = 220;      // minimum curvature
+const BEND_SCALE = 0.55;   // curvature grows with edge length
+
+const ANIM_MS = 750;
+const EDGE_PAD = 10;       // gap from box edge to arrow start/end
+
+/* ================= DATA ================= */
+const colors = {
+  Flat:"#ffddb8",
+  Tensors:"#d5ffc9",
+  Curvature:"#b9e2ff",
+  Einstein:"#f3ccff",
+  Schwarzschild:"#ffb7b7"
+};
+
+const explanations = {
+  "Flat Spacetime": "Metric: $$\\eta_{\\mu\\nu} = \\text{diag}(-1,1,1,1).$$",
+  "Special Relativity": "Lorentz factor: $$\\gamma = \\frac{1}{\\sqrt{1-v^2/c^2}}.$$",
+  "Four-Vectors": "Example: $$x^\\mu=(ct,x,y,z).$$",
+  "Index Notation": "Einstein summation: $$A_\\mu B^\\mu.$$",
+  "Tensors": "General multilinear, coordinate-independent objects.",
+  "Arbitrary Coordinates": "Coordinate change: $$x^{\\mu} \\rightarrow x^{\\mu'}.$$",
+  "Tensor Equations": "Conservation: $$\\nabla_\\mu T^{\\mu\\nu}=0.$$",
+  "Maxwell's Equations": "$$\\nabla_\\mu F^{\\mu\\nu}=\\mu_0 J^\\nu.$$",
+  "Geodesics": "$$\\frac{d^2 x^\\mu}{d\\tau^2} + \\Gamma^\\mu_{\\alpha\\beta}u^\\alpha u^\\beta = 0.$$",
+  "Curvature": "Curvature tensor built from Christoffel symbols.",
+  "Christoffel Symbols": "$$\\Gamma^\\mu_{\\alpha\\beta} = \\frac12 g^{\\mu\\lambda}(\\partial_\\alpha g_{\\lambda\\beta}+\\partial_\\beta g_{\\lambda\\alpha}-\\partial_\\lambda g_{\\alpha\\beta}).$$",
+  "Riemann Tensor": "$$R^\\rho_{\\sigma\\mu\\nu}$$ encodes spacetime curvature.",
+  "Geodesic Deviation": "$$\\frac{D^2 \\xi^\\mu}{D\\tau^2} = -R^\\mu_{\\ \\alpha\\nu\\beta} u^\\alpha u^\\beta \\xi^\\nu.$$",
+  "Einstein Equation": "$$G_{\\mu\\nu}=8\\pi G T_{\\mu\\nu}.$$",
+  "Stress-Energy Tensor": "Encodes energy density, momentum, and pressure.",
+  "Schwarzschild Solution": "Static, spherically symmetric vacuum solution.",
+  "Schwarzschild Metric": "$$ds^2 = -(1-2GM/r)dt^2 + (1-2GM/r)^{-1}dr^2 + r^2 d\\Omega^2.$$",
+  "Particle Orbits": "Effective potential determines bound/unstable orbits.",
+  "Precession": "Relativistic perihelion advance (e.g. Mercury).",
+  "Photon Orbits": "Unstable circular orbit at $$r=3GM.$$",
+  "Light Deflection": "Deflection angle $$\\Delta\\phi \\approx \\frac{4GM}{bc^2}.$$",
+  "Event Horizon": "Schwarzschild radius $$r=2GM.$$"
+};
+
+const topics = [
+  "Flat Spacetime","Special Relativity","Four-Vectors","Index Notation",
+  "Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics",
+  "Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation",
+  "Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution",
+  "Schwarzschild Metric","Particle Orbits","Precession","Photon Orbits",
+  "Light Deflection","Event Horizon"
+];
+
+const relations = [
+  ["Flat Spacetime","Special Relativity","basis of"],
+  ["Special Relativity","Four-Vectors","expressed in"],
+  ["Four-Vectors","Index Notation","uses"],
+  ["Four-Vectors","Tensors","generalized to"],
+  ["Tensors","Arbitrary Coordinates","defined on"],
+  ["Arbitrary Coordinates","Tensor Equations","manipulated by"],
+  ["Tensor Equations","Maxwell's Equations","expresses"],
+  ["Tensors","Geodesics","define"],
+  ["Geodesics","Curvature","affected by"],
+  ["Curvature","Christoffel Symbols","built from"],
+  ["Curvature","Riemann Tensor","constructed from"],
+  ["Riemann Tensor","Geodesic Deviation","measures"],
+  ["Curvature","Einstein Equation","forms LHS of"],
+  ["Stress-Energy Tensor","Einstein Equation","sources"],
+  ["Einstein Equation","Schwarzschild Solution","solved by"],
+  ["Schwarzschild Solution","Schwarzschild Metric","yields"],
+  ["Schwarzschild Metric","Particle Orbits","determines"],
+  ["Schwarzschild Metric","Precession","predicts"],
+  ["Schwarzschild Metric","Photon Orbits","produces"],
+  ["Schwarzschild Metric","Light Deflection","predicts"],
+  ["Schwarzschild Metric","Event Horizon","implies"]
+];
+
+function groupOf(n){
+  if (["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"].includes(n)) return "Flat";
+  if (["Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics"].includes(n)) return "Tensors";
+  if (["Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation"].includes(n)) return "Curvature";
+  if (["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"].includes(n)) return "Einstein";
+  return "Schwarzschild";
+}
+
+/* ================= BUILD SVG ================= */
+const svg = d3.select("#svg");
+const root = svg.append("g");
+
+svg.call(
+  d3.zoom().scaleExtent([0.3, 3])
+    .on("zoom", e => root.attr("transform", e.transform))
+);
+
+const nodeData = {};
+topics.forEach(t => nodeData[t] = { name:t, x:0, y:0, group: groupOf(t) });
+
+const linkData = relations.map(([a,b,label]) => ({
+  source: nodeData[a],
+  target: nodeData[b],
+  label
+}));
+
+/* ================= DRAW LINKS ================= */
+const linkG = root.append("g");
+const labelG = root.append("g");
+const nodeG = root.append("g");
+
+const linkPaths = linkG.selectAll("path")
+  .data(linkData)
+  .enter().append("path")
+  .attr("class","link")
+  .attr("marker-end","url(#arrow)");
+
+const linkLabels = labelG.selectAll("text")
+  .data(linkData)
+  .enter().append("text")
+  .attr("class","link-label")
+  .text(d => d.label);
+
+/* ================= DRAW NODES ================= */
+const nodes = nodeG.selectAll("g")
+  .data(Object.values(nodeData))
+  .enter().append("g")
+  .attr("class","node")
+  .on("click", (e,d) => showInfo(d))
+  .on("mouseenter", (e,d) => highlight(d, true))
+  .on("mouseleave", (e,d) => highlight(d, false))
+  .call(d3.drag().on("drag", (e,d) => { d.x=e.x; d.y=e.y; update(false); }));
+
+nodes.append("rect")
+  .attr("width", NODE_W)
+  .attr("height", NODE_H)
+  .attr("x", -HALF_W)
+  .attr("y", -HALF_H)
+  .attr("fill", d => colors[d.group]);
+
+nodes.append("text")
+  .attr("class","title")
+  .attr("dy", -2)
+  .text(d => d.name);
+
+nodes.append("text")
+  .attr("class","hint")
+  .attr("dy", 22)
+  .text("Click for details");
+
+/* ================= ROUTING / UPDATE ================= */
+function update(animate=true){
+  const t = animate ? d3.transition().duration(ANIM_MS).ease(d3.easeCubicInOut) : null;
+
+  (animate ? nodes.transition(t) : nodes)
+    .attr("transform", d => `translate(${d.x},${d.y})`);
+
+  const pathSel = animate ? linkPaths.transition(t) : linkPaths;
+
+  pathSel.attr("d", d => {
+    const x1 = d.source.x, y1 = d.source.y;
+    const x2 = d.target.x, y2 = d.target.y;
+
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+
+    const ux = dx / len, uy = dy / len;
+
+    // Start/end points pushed to box border
+    const sx = x1 + ux * (HALF_W + EDGE_PAD);
+    const sy = y1 + uy * (HALF_H + EDGE_PAD);
+    const tx = x2 - ux * (HALF_W + EDGE_PAD);
+    const ty = y2 - uy * (HALF_H + EDGE_PAD);
+
+    // Adaptive curvature: tighter layout -> arrows still breathe
+    const edgeLen = Math.hypot(tx - sx, ty - sy);
+    const bend = Math.max(MIN_BEND, edgeLen * BEND_SCALE);
+
+    // Quadratic control point normal to the segment
+    const mx = (sx + tx) / 2;
+    const my = (sy + ty) / 2;
+    const cx = mx - uy * bend;
+    const cy = my + ux * bend;
+
+    return `M ${sx},${sy} Q ${cx},${cy} ${tx},${ty}`;
+  });
+
+  // Labels: keep readable and near the middle
+  linkLabels
+    .attr("x", d => (d.source.x + d.target.x) / 2)
+    .attr("y", d => (d.source.y + d.target.y) / 2 - 24);
+}
+
+/* ================= HIGHLIGHT ================= */
+function highlight(d, on){
+  // Node border highlight
+  nodes.selectAll("rect")
+    .classed("highlight", n => on && n === d);
+
+  // Links: highlight incident, dim others
+  linkPaths
+    .classed("active", l => on && (l.source === d || l.target === d))
+    .classed("dim",    l => on && !(l.source === d || l.target === d));
+
+  // Labels follow link visibility a bit
+  linkLabels.style("opacity", l => {
+    if (!on) return 1;
+    return (l.source === d || l.target === d) ? 1 : 0.25;
+  });
+}
+
+/* ================= INFO PANEL ================= */
+function showInfo(d){
+  document.getElementById("infoTitle").innerText = d.name;
+
+  // Use innerHTML so MathJax display blocks work ( $$...$$ )
+  document.getElementById("infoContent").innerHTML =
+    explanations[d.name] || "No description available.";
+
+  document.getElementById("infoBox").style.display = "block";
+
+  // Re-typeset math if MathJax is loaded
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
+}
+
+function hideInfo(){
+  document.getElementById("infoBox").style.display = "none";
+}
+
+/* ================= LAYOUTS ================= */
+function layout(levels){
+  const minX = 300, maxX = 3300;
+  const topY = 260;
+
+  levels.forEach((row, i) => {
+    const y = topY + i * DY;
+    row.forEach((name, j) => {
+      nodeData[name].x = minX + (maxX - minX) * ROW_SPREAD * (j + 1) / (row.length + 1);
+      nodeData[name].y = y;
+    });
+  });
+
+  update(true);
+}
+
+function applyDifficulty(){
+  layout([
+    ["Einstein Equation"],
+    ["Schwarzschild Metric","Riemann Tensor"],
+    ["Christoffel Symbols","Curvature","Geodesic Deviation","Schwarzschild Solution"],
+    ["Stress-Energy Tensor","Particle Orbits","Precession","Photon Orbits","Light Deflection","Event Horizon"],
+    ["Tensor Equations","Arbitrary Coordinates","Geodesics","Maxwell's Equations","Tensors"],
+    ["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"]
+  ]);
+}
+
+function applyChrono(){
+  layout([
+    ["Flat Spacetime"],
+    ["Special Relativity","Four-Vectors","Index Notation"],
+    ["Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics"],
+    ["Christoffel Symbols","Curvature","Riemann Tensor","Geodesic Deviation"],
+    ["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"],
+    ["Schwarzschild Metric"],
+    ["Particle Orbits","Precession","Photon Orbits","Light Deflection","Event Horizon"]
+  ]);
+}
+
+/* ================= INIT ================= */
+applyChrono();
+
+</script>
+</body>
+</html>
