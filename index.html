@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <title>PHYS 453 – Concept Map</title>
 
-<!-- MathJax (single, correct load) -->
 <script>
   window.MathJax = {
     tex: {
@@ -187,11 +186,11 @@ const HALF_W = NODE_W/2, HALF_H = NODE_H/2;
 const DY = 300;            // tighter vertical spacing
 const ROW_SPREAD = 1.15;   // tighter horizontal spacing
 
-const MIN_BEND = 220;      // minimum curvature
-const BEND_SCALE = 0.55;   // curvature grows with edge length
+const MIN_BEND = 220;   
+const BEND_SCALE = 0.55;
 
 const ANIM_MS = 750;
-const EDGE_PAD = 10;       // gap from box edge to arrow start/end
+const EDGE_PAD = 10;    
 
 /* ================= DATA ================= */
 const colors = {
@@ -210,16 +209,16 @@ const explanations = {
   "Tensors": "General multilinear, coordinate-independent objects.",
   "Arbitrary Coordinates": "Coordinate change: $$x^{\\mu} \\rightarrow x^{\\mu'}.$$",
   "Tensor Equations": "Conservation: $$\\nabla_\\mu T^{\\mu\\nu}=0.$$",
-  "Maxwell's Equations": "$$\\nabla_\\mu F^{\\mu\\nu}=\\mu_0 J^\\nu.$$",
+  "Lorentz Transformations": "Coordinate transformations preserving the spacetime interval: $$x^{\\mu'} = \\Lambda^{\\mu'}{}_{\\nu} x^{\\nu}, \\quad \\Lambda^T \\eta \\Lambda = \\eta.$$",
   "Geodesics": "$$\\frac{d^2 x^\\mu}{d\\tau^2} + \\Gamma^\\mu_{\\alpha\\beta}u^\\alpha u^\\beta = 0.$$",
   "Curvature": "Curvature tensor built from Christoffel symbols.",
   "Christoffel Symbols": "$$\\Gamma^\\mu_{\\alpha\\beta} = \\frac12 g^{\\mu\\lambda}(\\partial_\\alpha g_{\\lambda\\beta}+\\partial_\\beta g_{\\lambda\\alpha}-\\partial_\\lambda g_{\\alpha\\beta}).$$",
-  "Riemann Tensor": "$$R^\\rho_{\\sigma\\mu\\nu}$$ encodes spacetime curvature.",
-  "Geodesic Deviation": "$$\\frac{D^2 \\xi^\\mu}{D\\tau^2} = -R^\\mu_{\\ \\alpha\\nu\\beta} u^\\alpha u^\\beta \\xi^\\nu.$$",
+  "Riemann Tensor": "$$R^{\\alpha}{}_{\\mu\\nu\\sigma}=\\partial_{\\nu}\\Gamma^{\\alpha}_{\\mu\\sigma}-\\partial_{\\sigma}\\Gamma^{\\alpha}_{\\mu\\nu}+\\Gamma^{\\alpha}_{\\rho\\nu}\\Gamma^{\\rho}_{\\mu\\sigma}-\\Gamma^{\\alpha}_{\\rho\\sigma}\\Gamma^{\\rho}_{\\mu\\nu}$$ encodes spacetime curvature.",
+  "Geodesic Deviation": "$$\\frac{D^{2} n^{\\alpha}}{D\\tau^{2}}=-R^{\\alpha}{}_{\\mu\\nu\\sigma}\\,u^{\\mu}u^{\\nu}n^{\\sigma}.$$",
   "Einstein Equation": "$$G_{\\mu\\nu}=8\\pi G T_{\\mu\\nu}.$$",
   "Stress-Energy Tensor": "Encodes energy density, momentum, and pressure.",
   "Schwarzschild Solution": "Static, spherically symmetric vacuum solution.",
-  "Schwarzschild Metric": "$$ds^2 = -(1-2GM/r)dt^2 + (1-2GM/r)^{-1}dr^2 + r^2 d\\Omega^2.$$",
+  "Schwarzschild Metric": "$$ds^2 = -\\left(1-\\frac{2GM}{r}\\right)dt^2 + \\left(1-\\frac{2GM}{r}\\right)^{-1}dr^2 + r^2\\,d\\theta^2 + r^2\\sin^2\\theta\\,d\\phi^2.$$",
   "Particle Orbits": "Effective potential determines bound/unstable orbits.",
   "Precession": "Relativistic perihelion advance (e.g. Mercury).",
   "Photon Orbits": "Unstable circular orbit at $$r=3GM.$$",
@@ -229,7 +228,7 @@ const explanations = {
 
 const topics = [
   "Flat Spacetime","Special Relativity","Four-Vectors","Index Notation",
-  "Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics",
+  "Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics",
   "Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation",
   "Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution",
   "Schwarzschild Metric","Particle Orbits","Precession","Photon Orbits",
@@ -243,7 +242,8 @@ const relations = [
   ["Four-Vectors","Tensors","generalized to"],
   ["Tensors","Arbitrary Coordinates","defined on"],
   ["Arbitrary Coordinates","Tensor Equations","manipulated by"],
-  ["Tensor Equations","Maxwell's Equations","expresses"],
+  ["Special Relativity","Lorentz Transformations","defined by"],
+  ["Lorentz Transformations","Four-Vectors","act on"],
   ["Tensors","Geodesics","define"],
   ["Geodesics","Curvature","affected by"],
   ["Curvature","Christoffel Symbols","built from"],
@@ -262,7 +262,7 @@ const relations = [
 
 function groupOf(n){
   if (["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"].includes(n)) return "Flat";
-  if (["Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics"].includes(n)) return "Tensors";
+  if (["Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics"].includes(n)) return "Tensors";
   if (["Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation"].includes(n)) return "Curvature";
   if (["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"].includes(n)) return "Einstein";
   return "Schwarzschild";
@@ -348,17 +348,14 @@ function update(animate=true){
 
     const ux = dx / len, uy = dy / len;
 
-    // Start/end points pushed to box border
     const sx = x1 + ux * (HALF_W + EDGE_PAD);
     const sy = y1 + uy * (HALF_H + EDGE_PAD);
     const tx = x2 - ux * (HALF_W + EDGE_PAD);
     const ty = y2 - uy * (HALF_H + EDGE_PAD);
 
-    // Adaptive curvature: tighter layout -> arrows still breathe
     const edgeLen = Math.hypot(tx - sx, ty - sy);
     const bend = Math.max(MIN_BEND, edgeLen * BEND_SCALE);
 
-    // Quadratic control point normal to the segment
     const mx = (sx + tx) / 2;
     const my = (sy + ty) / 2;
     const cx = mx - uy * bend;
@@ -367,7 +364,6 @@ function update(animate=true){
     return `M ${sx},${sy} Q ${cx},${cy} ${tx},${ty}`;
   });
 
-  // Labels: keep readable and near the middle
   linkLabels
     .attr("x", d => (d.source.x + d.target.x) / 2)
     .attr("y", d => (d.source.y + d.target.y) / 2 - 24);
@@ -375,16 +371,13 @@ function update(animate=true){
 
 /* ================= HIGHLIGHT ================= */
 function highlight(d, on){
-  // Node border highlight
   nodes.selectAll("rect")
     .classed("highlight", n => on && n === d);
 
-  // Links: highlight incident, dim others
   linkPaths
     .classed("active", l => on && (l.source === d || l.target === d))
     .classed("dim",    l => on && !(l.source === d || l.target === d));
 
-  // Labels follow link visibility a bit
   linkLabels.style("opacity", l => {
     if (!on) return 1;
     return (l.source === d || l.target === d) ? 1 : 0.25;
@@ -395,13 +388,11 @@ function highlight(d, on){
 function showInfo(d){
   document.getElementById("infoTitle").innerText = d.name;
 
-  // Use innerHTML so MathJax display blocks work ( $$...$$ )
   document.getElementById("infoContent").innerHTML =
     explanations[d.name] || "No description available.";
 
   document.getElementById("infoBox").style.display = "block";
 
-  // Re-typeset math if MathJax is loaded
   if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise();
 }
 
@@ -431,7 +422,7 @@ function applyDifficulty(){
     ["Schwarzschild Metric","Riemann Tensor"],
     ["Christoffel Symbols","Curvature","Geodesic Deviation","Schwarzschild Solution"],
     ["Stress-Energy Tensor","Particle Orbits","Precession","Photon Orbits","Light Deflection","Event Horizon"],
-    ["Tensor Equations","Arbitrary Coordinates","Geodesics","Maxwell's Equations","Tensors"],
+    ["Tensor Equations","Arbitrary Coordinates","Geodesics","Lorentz Transformations","Tensors"],
     ["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"]
   ]);
 }
@@ -440,7 +431,7 @@ function applyChrono(){
   layout([
     ["Flat Spacetime"],
     ["Special Relativity","Four-Vectors","Index Notation"],
-    ["Tensors","Arbitrary Coordinates","Tensor Equations","Maxwell's Equations","Geodesics"],
+    ["Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics"],
     ["Christoffel Symbols","Curvature","Riemann Tensor","Geodesic Deviation"],
     ["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"],
     ["Schwarzschild Metric"],
