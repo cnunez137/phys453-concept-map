@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>PHYS 453 – Concept Map Sofia</title>
+<title>PHYS 453 – Concept Map</title>
 
+<!-- MathJax (single, correct load) -->
 <script>
   window.MathJax = {
     tex: {
@@ -139,7 +140,7 @@ svg { width: 100vw; height: 100vh; }
 /* ===== LINK LABELS ===== */
 .link-label {
   fill: white;
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 800;
   letter-spacing: 0.4px;
   pointer-events: none;
@@ -152,7 +153,7 @@ svg { width: 100vw; height: 100vh; }
 
 <body>
 
-<div id="title">PHYS 453 – Cesar Nunez</div>
+<div id="title">PHYS 453 – Cesar D Nunez</div>
 
 <div id="controls">
   <button onclick="applyDifficulty()">Difficulty View</button>
@@ -180,17 +181,17 @@ svg { width: 100vw; height: 100vh; }
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 /* ================= CONFIG ================= */
-const NODE_W = 310, NODE_H = 76;
+const NODE_W = 310, NODE_H = 86;
 const HALF_W = NODE_W/2, HALF_H = NODE_H/2;
 
-const DY = 300;            // tighter vertical spacing
-const ROW_SPREAD = 1.15;   // tighter horizontal spacing
+const DY = 450;         
+const ROW_SPREAD = 1.35;  
 
-const MIN_BEND = 220;   
+const MIN_BEND = 120;
 const BEND_SCALE = 0.55;
 
 const ANIM_MS = 750;
-const EDGE_PAD = 10;    
+const EDGE_PAD = 10;
 
 /* ================= DATA ================= */
 const colors = {
@@ -202,34 +203,34 @@ const colors = {
 };
 
 const explanations = {
-  "Flat Spacetime": "Metric: $$\\eta_{\\mu\\nu} = \\text{diag}(-1,1,1,1).$$",
-  "Special Relativity": "Lorentz factor: $$\\gamma = \\frac{1}{\\sqrt{1-v^2/c^2}}.$$",
-  "Four-Vectors": "Example: $$x^\\mu=(ct,x,y,z).$$",
-  "Index Notation": "Einstein summation: $$A_\\mu B^\\mu.$$",
-  "Tensors": "General multilinear, coordinate-independent objects.",
-  "Arbitrary Coordinates": "Coordinate change: $$x^{\\mu} \\rightarrow x^{\\mu'}.$$",
-  "Tensor Equations": "Conservation: $$\\nabla_\\mu T^{\\mu\\nu}=0.$$",
-  "Lorentz Transformations": "Coordinate transformations preserving the spacetime interval: $$x^{\\mu'} = \\Lambda^{\\mu'}{}_{\\nu} x^{\\nu}, \\quad \\Lambda^T \\eta \\Lambda = \\eta.$$",
-  "Geodesics": "$$\\frac{d^2 x^\\mu}{d\\tau^2} + \\Gamma^\\mu_{\\alpha\\beta}u^\\alpha u^\\beta = 0.$$",
-  "Curvature": "Curvature tensor built from Christoffel symbols.",
-  "Christoffel Symbols": "$$\\Gamma^\\mu_{\\alpha\\beta} = \\frac12 g^{\\mu\\lambda}(\\partial_\\alpha g_{\\lambda\\beta}+\\partial_\\beta g_{\\lambda\\alpha}-\\partial_\\lambda g_{\\alpha\\beta}).$$",
-  "Riemann Tensor": "$$R^{\\alpha}{}_{\\mu\\nu\\sigma}=\\partial_{\\nu}\\Gamma^{\\alpha}_{\\mu\\sigma}-\\partial_{\\sigma}\\Gamma^{\\alpha}_{\\mu\\nu}+\\Gamma^{\\alpha}_{\\rho\\nu}\\Gamma^{\\rho}_{\\mu\\sigma}-\\Gamma^{\\alpha}_{\\rho\\sigma}\\Gamma^{\\rho}_{\\mu\\nu}$$ encodes spacetime curvature.",
-  "Geodesic Deviation": "$$\\frac{D^{2} n^{\\alpha}}{D\\tau^{2}}=-R^{\\alpha}{}_{\\mu\\nu\\sigma}\\,u^{\\mu}u^{\\nu}n^{\\sigma}.$$",
-  "Einstein Equation": "$$G_{\\mu\\nu}=8\\pi G T_{\\mu\\nu}.$$",
-  "Stress-Energy Tensor": "Encodes energy density, momentum, and pressure.",
-  "Schwarzschild Solution": "Static, spherically symmetric vacuum solution.",
-  "Schwarzschild Metric": "$$ds^2 = -\\left(1-\\frac{2GM}{r}\\right)dt^2 + \\left(1-\\frac{2GM}{r}\\right)^{-1}dr^2 + r^2\\,d\\theta^2 + r^2\\sin^2\\theta\\,d\\phi^2.$$",
-  "Particle Orbits": "Effective potential determines bound/unstable orbits.",
-  "Precession": "Relativistic perihelion advance (e.g. Mercury).",
-  "Photon Orbits": "Unstable circular orbit at $$r=3GM.$$",
-  "Light Deflection": "Deflection angle $$\\Delta\\phi \\approx \\frac{4GM}{bc^2}.$$",
-  "Event Horizon": "Schwarzschild radius $$r=2GM.$$"
+  "Flat Spacetime": "Metric: $$\\eta_{\\mu\\nu} = \\mathrm{diag}(-1,1,1,1).$$",
+  "Special Relativity": "Lorentz factor: $$\\gamma = \\frac{1}{\\sqrt{1-v^2/c^2}}.$$\nInvariant interval: $$ds^2=\\eta_{\\mu\\nu}\\,dx^{\\mu}dx^{\\nu}.$$",
+  "Four-Vectors": "Example: $$x^\\mu=(ct,x,y,z),\\quad u^\\mu=\\frac{dx^\\mu}{d\\tau}.$$",
+  "Index Notation": "Einstein summation convention: repeated up/down indices are summed.\n$$A_\\mu B^\\mu = \\sum_{\\mu=0}^{3} A_\\mu B^\\mu.$$",
+  "Tensors": "Coordinate-independent multilinear objects. A (0,2)-tensor transforms as\n$$T_{\\mu'\\nu'}=\\frac{\\partial x^{\\mu}}{\\partial x^{\\mu'}}\\frac{\\partial x^{\\nu}}{\\partial x^{\\nu'}}T_{\\mu\\nu}.$$",
+  "Arbitrary Coordinates": "General coordinate transformations: $$x^{\\mu}\\rightarrow x^{\\mu'}(x).$$\nMetric becomes position-dependent: $$g_{\\mu\\nu}(x).$$",
+  "Tensor Equations": "Use covariant derivatives to write coordinate-invariant laws, e.g.\n$$\\nabla_\\mu T^{\\mu\\nu}=0.$$",
+  "Lorentz Transformations": "Transformations preserving the Minkowski metric:\n$$x^{\\mu'} = \\Lambda^{\\mu'}{}_{\\nu}x^{\\nu},\\quad \\Lambda^T\\eta\\Lambda=\\eta.$$",
+  "Geodesics": "Free-fall worldlines (extremize proper time):\n$$\\frac{d^2 x^\\mu}{d\\tau^2}+\\Gamma^{\\mu}_{\\alpha\\beta}\\frac{dx^{\\alpha}}{d\\tau}\\frac{dx^{\\beta}}{d\\tau}=0.$$",
+  "Curvature": "Curvature from the metric and its derivatives.\nKey contractions:\n$$R_{\\mu\\nu}=R^{\\alpha}{}_{\\mu\\alpha\\nu},\\qquad R=g^{\\mu\\nu}R_{\\mu\\nu}.$$",
+  "Christoffel Symbols": "Levi-Civita connection (metric-compatible, torsion-free):\n$$\\Gamma^\\mu_{\\alpha\\beta}=\\frac12 g^{\\mu\\lambda}(\\partial_\\alpha g_{\\lambda\\beta}+\\partial_\\beta g_{\\lambda\\alpha}-\\partial_\\lambda g_{\\alpha\\beta}).$$",
+  "Ricci Tensor": "A contraction (trace) of the Riemann tensor:\n$$R_{\\mu\\nu}=R^{\\alpha}{}_{\\mu\\alpha\\nu}.$$\nIt summarizes how volumes/expansions of nearby geodesics focus and is central in Einstein’s equation.",
+  "Ricci Scalar": "Scalar curvature (trace of the Ricci tensor):\n$$R=g^{\\mu\\nu}R_{\\mu\\nu}.$$\nMeasures average curvature at a point; used to form the Einstein tensor.",
+  "Einstein Equation": "Field equation relating geometry to matter:\n$$G_{\\mu\\nu}=R_{\\mu\\nu}-\\frac12 g_{\\mu\\nu}R = 8\\pi G\\,T_{\\mu\\nu}.$$",
+  "Stress-Energy Tensor": "Encodes energy density, momentum flux, and stresses.\nActs as the source term in\n$$G_{\\mu\\nu}=8\\pi G\\,T_{\\mu\\nu}.$$",
+  "Schwarzschild Solution": "Static, spherically symmetric vacuum solution where\n$$T_{\\mu\\nu}=0\\ \\Rightarrow\\ G_{\\mu\\nu}=0\\ \\Rightarrow\\ R_{\\mu\\nu}=0.$$",
+  "Schwarzschild Metric": "$$ds^2=-\\left(1-\\frac{2GM}{r}\\right)dt^2+\\left(1-\\frac{2GM}{r}\\right)^{-1}dr^2+r^2 d\\theta^2+r^2\\sin^2\\theta\\,d\\phi^2.$$",
+  "Particle Orbits": "Timelike geodesics in Schwarzschild yield an effective potential; predict bound/unstable orbits and ISCO behavior.",
+  "Precession": "Perihelion advance from relativistic corrections (e.g., Mercury). A standard result is\n$$\\Delta\\phi \\approx \\frac{6\\pi GM}{a(1-e^2)c^2}.$$",
+  "Photon Orbits": "Null geodesics admit an unstable circular orbit at\n$$r=3GM/c^2\\quad (c=1\\Rightarrow r=3GM).$$",
+  "Light Deflection": "Weak-field deflection (impact parameter $b$):\n$$\\Delta\\phi\\approx\\frac{4GM}{bc^2}.$$",
+  "Event Horizon": "Schwarzschild radius:\n$$r_s=\\frac{2GM}{c^2}\\quad (c=1\\Rightarrow r_s=2GM).$$"
 };
 
 const topics = [
   "Flat Spacetime","Special Relativity","Four-Vectors","Index Notation",
   "Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics",
-  "Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation",
+  "Curvature","Christoffel Symbols","Ricci Tensor","Ricci Scalar",
   "Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution",
   "Schwarzschild Metric","Particle Orbits","Precession","Photon Orbits",
   "Light Deflection","Event Horizon"
@@ -247,9 +248,10 @@ const relations = [
   ["Tensors","Geodesics","define"],
   ["Geodesics","Curvature","affected by"],
   ["Curvature","Christoffel Symbols","built from"],
-  ["Curvature","Riemann Tensor","constructed from"],
-  ["Riemann Tensor","Geodesic Deviation","measures"],
-  ["Curvature","Einstein Equation","forms LHS of"],
+  ["Christoffel Symbols","Ricci Tensor","defines"],
+  ["Ricci Tensor","Ricci Scalar","traces to"],
+  ["Ricci Tensor","Einstein Equation","builds"],
+  ["Ricci Scalar","Einstein Equation","builds"],
   ["Stress-Energy Tensor","Einstein Equation","sources"],
   ["Einstein Equation","Schwarzschild Solution","solved by"],
   ["Schwarzschild Solution","Schwarzschild Metric","yields"],
@@ -263,7 +265,7 @@ const relations = [
 function groupOf(n){
   if (["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"].includes(n)) return "Flat";
   if (["Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics"].includes(n)) return "Tensors";
-  if (["Curvature","Christoffel Symbols","Riemann Tensor","Geodesic Deviation"].includes(n)) return "Curvature";
+  if (["Curvature","Christoffel Symbols","Ricci Tensor","Ricci Scalar"].includes(n)) return "Curvature";
   if (["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"].includes(n)) return "Einstein";
   return "Schwarzschild";
 }
@@ -365,8 +367,24 @@ function update(animate=true){
   });
 
   linkLabels
-    .attr("x", d => (d.source.x + d.target.x) / 2)
-    .attr("y", d => (d.source.y + d.target.y) / 2 - 24);
+    .each(function(d){
+      const p = linkPaths.filter(lp => lp === d).node();
+      if (!p) return;
+
+      const L = p.getTotalLength();
+      const mid = p.getPointAtLength(L * 0.5);
+      const a = p.getPointAtLength(L * 0.5 - 1);
+      const b = p.getPointAtLength(L * 0.5 + 1);
+
+      const tx = b.x - a.x, ty = b.y - a.y;
+      const tlen = Math.hypot(tx, ty) || 1;
+      const nx = -ty / tlen, ny = tx / tlen;
+
+      d._lx = mid.x + nx * 18;
+      d._ly = mid.y + ny * 18;
+    })
+    .attr("x", d => d._lx ?? (d.source.x + d.target.x)/2)
+    .attr("y", d => d._ly ?? (d.source.y + d.target.y)/2);
 }
 
 /* ================= HIGHLIGHT ================= */
@@ -419,8 +437,8 @@ function layout(levels){
 function applyDifficulty(){
   layout([
     ["Einstein Equation"],
-    ["Schwarzschild Metric","Riemann Tensor"],
-    ["Christoffel Symbols","Curvature","Geodesic Deviation","Schwarzschild Solution"],
+    ["Schwarzschild Metric","Ricci Tensor"],
+    ["Christoffel Symbols","Curvature","Ricci Scalar","Schwarzschild Solution"],
     ["Stress-Energy Tensor","Particle Orbits","Precession","Photon Orbits","Light Deflection","Event Horizon"],
     ["Tensor Equations","Arbitrary Coordinates","Geodesics","Lorentz Transformations","Tensors"],
     ["Flat Spacetime","Special Relativity","Four-Vectors","Index Notation"]
@@ -432,7 +450,7 @@ function applyChrono(){
     ["Flat Spacetime"],
     ["Special Relativity","Four-Vectors","Index Notation"],
     ["Tensors","Arbitrary Coordinates","Tensor Equations","Lorentz Transformations","Geodesics"],
-    ["Christoffel Symbols","Curvature","Riemann Tensor","Geodesic Deviation"],
+    ["Christoffel Symbols","Curvature","Ricci Tensor","Ricci Scalar"],
     ["Einstein Equation","Stress-Energy Tensor","Schwarzschild Solution"],
     ["Schwarzschild Metric"],
     ["Particle Orbits","Precession","Photon Orbits","Light Deflection","Event Horizon"]
